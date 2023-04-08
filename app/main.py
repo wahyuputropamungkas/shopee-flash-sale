@@ -13,9 +13,8 @@ timeout = 60
 url = 'https://shopee.co.id/SANDAL-DISTRO-PRIA-CASUAL-KEKINIAN-i.367732093.16669092439'
 
 def scrap():
-    print('load homepage...')
-
     options = webdriver.ChromeOptions()
+    options.add_argument('log-level=3')
     options.add_argument("--window-size=1280,720")
     driver = webdriver.Chrome(options=options)
 
