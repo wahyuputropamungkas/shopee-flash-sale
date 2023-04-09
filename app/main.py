@@ -73,11 +73,17 @@ def scrap():
     print(colored('PROCESS : load page ', 'green', attrs=['reverse']))
 
     options = webdriver.ChromeOptions()
+    options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument('log-level=3')
-    # options.add_argument("--window-size=1280,720")
-    driver = webdriver.Chrome(options=options)
+    options.add_argument("--window-size=1280,720")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
 
+    driver = webdriver.Chrome(options=options)
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     driver.get(inputUrl)
+
+    time.sleep(5)
 
     print(colored('PROCESS : load cookies ', 'green', attrs=['reverse']))
 
@@ -97,6 +103,8 @@ def scrap():
     print(colored('PROCESS : refreshing ', 'green', attrs=['reverse']))
 
     driver.refresh()
+
+    time.sleep(3)
 
     if isFlashSale:
         # waiting for flash sale link to disappear
@@ -207,6 +215,10 @@ def scrap():
         return True
 
     driver.find_element(By.XPATH, '//button[text()="Buat Pesanan"]').click()
+
+    time.sleep(2)
+
+    driver.close()
 
     print(colored('PROGRAM SUCCESS! : ', 'green', attrs=['reverse']))
 
