@@ -13,18 +13,22 @@ global inputUrl
 global inputIsProductHasVariations
 global inputTotalProductVariations
 global productVariations
+global isFlashSale
 inputUrl = ''
 inputIsProductHasVariations = 'n'
 inputTotalProductVariations = '0'
 productVariations = []
+isFlashSale = True
 
 def inputData():
     global inputUrl
     global inputIsProductHasVariations
     global inputTotalProductVariations
     global productVariations
+    global isFlashSale
 
     inputUrl = input(colored('PASTE URL (Ctrl + Shift + C) : ', 'red', attrs=['reverse']))
+    inputFlashSale = input(colored('IS PRODUCT IN FLASH SALE? (y/n) : ', 'red', attrs=['reverse']))
     inputIsProductHasVariations = input(colored('IS PRODUCT HAS VARIATIONS? (y/n) : ', 'red', attrs=['reverse']))
 
     productVariations = []
@@ -40,6 +44,7 @@ def inputData():
 
     print(colored('CONFIRMATION! : ', 'blue', attrs=['reverse']))
     print(colored('YOUR PRODUCT URL IS : ' + inputUrl, 'blue', attrs=['reverse']))
+    print(colored('IS PRODUCT IN FLASH SALE : ' + inputFlashSale, 'blue', attrs=['reverse']))
     print(colored('IS PRODUCT HAS VARIATIONS? : ' + inputIsProductHasVariations, 'blue', attrs=['reverse']))
 
     if inputIsProductHasVariations == 'y':
@@ -48,6 +53,9 @@ def inputData():
     isContinue = input(colored('DO YOU WANT TO CONTINUE? (y/n) : ', 'red', attrs=['reverse']))
 
     if isContinue == 'y':
+        if inputFlashSale == 'n':
+            isFlashSale = False
+
         scrap()
     else:
         isTryAgain = input(colored('DO YOU WANT TO TRY AGAIN? (y/n) : ', 'red', attrs=['reverse']))
@@ -60,6 +68,7 @@ def inputData():
 def scrap():
     global inputUrl
     global productVariations
+    global isFlashSale
 
     print(colored('PROCESS : load page ', 'green', attrs=['reverse']))
 
@@ -88,6 +97,21 @@ def scrap():
     print(colored('PROCESS : refreshing ', 'green', attrs=['reverse']))
 
     driver.refresh()
+
+    if isFlashSale:
+        # waiting for flash sale link to disappear
+
+        isFlashSaleLinkDisappear = False
+
+        try:
+            WebDriverWait(driver, 180).until(ec.invisibility_of_element_located((By.XPATH, '//a[contains(@href, "/flash_sale")]')))
+            isFlashSaleLinkDisappear = True
+            print(colored('PROCESS : flash sale button is disappear', 'green', attrs=['reverse']))
+        except Exception as e:
+            print(colored('ERROR waiting flash sale button to disappear! ' + str(e), 'red', attrs=['reverse']))
+
+        if not isFlashSaleLinkDisappear:
+            return True
 
     # waiting for shipping button
 
