@@ -88,7 +88,8 @@ def scrap():
     print(colored('PROCESS : refreshing ', 'green', attrs=['reverse']))
 
     driver.refresh()
-    time.sleep(5)
+
+    # waiting for shipping button
 
     waitShippingButton = False
 
@@ -101,12 +102,27 @@ def scrap():
 
     if not waitShippingButton:
         return True
+    
+    isVariationsComplete = True
 
     if len(productVariations) > 0:
         for item in productVariations:
-            driver.find_element(By.XPATH, '//button[contains(@class, "product-variation")][text()="' + item + '"]').click()
+            currentVariation = driver.find_element(By.XPATH, '//button[contains(@class, "product-variation")][text()="' + item + '"]')
 
-    driver.find_element(By.XPATH, '//button[text()="beli sekarang"]').click()
+            if len(currentVariation) > 0 and currentVariation.is_enabled():
+                currentVariation.click()
+            else:
+                isVariationsComplete = False
+                break
+
+    if isVariationsComplete:
+        driver.find_element(By.XPATH, '//button[text()="beli sekarang"]').click()
+    else:
+        print(colored('ERROR incomplete product variations!', 'red', attrs=['reverse']))
+
+        return True
+
+    # waiting for checkout button
 
     waitCheckoutButton = False
 
@@ -122,17 +138,7 @@ def scrap():
 
     driver.find_element(By.XPATH, '//button[contains(@class, "shopee-button-solid shopee-button-solid--primary")]/span[text()="checkout"]').click()
 
-    waitPlaceOrderButton = False
-
-    try:
-        WebDriverWait(driver, timeout).until(ec.presence_of_element_located((By.XPATH, '//button[text()="Buat Pesanan"]')))
-        waitPlaceOrderButton = True
-        print(colored('PROCESS : place order button ok ', 'green', attrs=['reverse']))
-    except Exception as e:
-        print(colored('ERROR waiting for place order button! ' + str(e), 'red', attrs=['reverse']))
-
-    if not waitPlaceOrderButton:
-        return True
+    # waiting for place order button
 
     waitBankTransferButton = False
 
@@ -148,6 +154,8 @@ def scrap():
 
     driver.find_element(By.XPATH, '//button[text()="Transfer Bank"]').click()
 
+    # waiting for bank mandiri button
+
     waitBankMandiriButton = False
 
     try:
@@ -162,7 +170,17 @@ def scrap():
 
     driver.find_element(By.XPATH, '//div[contains(@class, "checkout-bank-transfer-item__title") and text()="Bank Mandiri"]').click()
 
-    time.sleep(3)
+    waitPlaceOrderButtonClickable = False
+
+    try:
+        WebDriverWait(driver, timeout).until(ec.element_to_be_clickable((By.XPATH, '//button[text()="Buat Pesanan"]')))
+        waitPlaceOrderButtonClickable = True
+        print(colored('PROCESS : place order button is clickable', 'green', attrs=['reverse']))
+    except Exception as e:
+        print(colored('ERROR place order button not found or unclickable! ' + str(e), 'red', attrs=['reverse']))
+
+    if not waitPlaceOrderButtonClickable:
+        return True
 
     driver.find_element(By.XPATH, '//button[text()="Buat Pesanan"]').click()
 
