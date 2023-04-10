@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from colorama import just_fix_windows_console
 
 timeout = 60
 global inputUrl
@@ -20,7 +21,14 @@ inputTotalProductVariations = '0'
 productVariations = []
 isFlashSale = True
 
+userAgents = [ 
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36", 
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36", 
+]
+
 def inputData():
+    just_fix_windows_console()
+
     global inputUrl
     global inputIsProductHasVariations
     global inputTotalProductVariations
@@ -81,6 +89,10 @@ def scrap():
 
     driver = webdriver.Chrome(options=options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+    for agent in userAgents:
+        driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": agent}) 
+
     driver.get(inputUrl)
 
     time.sleep(5)
@@ -139,10 +151,10 @@ def scrap():
 
     if len(productVariations) > 0:
         for item in productVariations:
-            currentVariation = driver.find_element(By.XPATH, '//button[contains(@class, "product-variation")][text()="' + item + '"]')
+            currentVariation = driver.find_elements(By.XPATH, '//button[contains(@class, "product-variation")][text()="' + item + '"]')
 
-            if len(currentVariation) > 0 and currentVariation.is_enabled():
-                currentVariation.click()
+            if len(currentVariation) > 0 and currentVariation[0].is_enabled():
+                currentVariation[0].click()
             else:
                 isVariationsComplete = False
                 break
