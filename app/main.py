@@ -140,31 +140,42 @@ def scrap():
 
     startTime = datetime.now()
 
+    waitingForFlashSale = False
+
     if isFlashSale:
         # waiting for flash sale link to disappear
 
         try:
-            WebDriverWait(driver=driver, timeout=360, poll_frequency=0.2).until(ec.invisibility_of_element_located((By.XPATH, '//a[contains(@href, "/flash_sale")]')))
+            WebDriverWait(driver=driver, timeout=360, poll_frequency=0.2).until(ec.invisibility_of_element_located((By.XPATH, '//a[contains(@href, "/flash_sale?")]')))
+            waitingForFlashSale = True
         except Exception as e:
             print(colored('ERROR waiting flash sale button to disappear! ' + str(e), 'red'))
             
             return True
+    else:
+        waitingForFlashSale = True
 
     # waiting for product variations
 
-    isVariationsComplete = True
+    isVariationsComplete = False
+    variationStatuses = []
 
     if len(productVariations) > 0:
         for item in productVariations:
             currentVariation = driver.find_elements(By.XPATH, '//button[contains(@class, "product-variation")][@aria-label="' + item + '"][text()="' + item + '"]')
 
             if len(currentVariation) > 0 and currentVariation[0].is_enabled():
+                variationStatuses.push(True)
                 currentVariation[0].click()
             else:
                 isVariationsComplete = False
+                variationStatuses.push(False)
                 break
 
-    if isVariationsComplete:
+    if False not in variationStatuses:
+        isVariationsComplete = True
+
+    if waitingForFlashSale and isVariationsComplete:
         try:
             driver.find_element(By.XPATH, '//button[text()="beli sekarang"]').click()
         except Exception as e:
@@ -178,22 +189,32 @@ def scrap():
 
     clickedPlaceOrder = datetime.now()
 
+    waitingForCheckoutButton = False
+
     try:
         WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[contains(@class, "shopee-button-solid shopee-button-solid--primary")]/span[text()="checkout"]')))
+        waitingForCheckoutButton = True
     except Exception as e:
         print(colored('ERROR waiting for checkout button! ' + str(e), 'red'))
 
         return True
-
-    driver.find_element(By.XPATH, '//button[contains(@class, "shopee-button-solid shopee-button-solid--primary")]/span[text()="checkout"]').click()
+    
+    if waitingForCheckoutButton:
+        driver.find_element(By.XPATH, '//button[contains(@class, "shopee-button-solid shopee-button-solid--primary")]/span[text()="checkout"]').click()
 
     clickedCheckout = datetime.now()
 
     # waiting for place order button
 
+    waitingForPaymentButton = False
+
     if inputPaymentMethod == 'transfer':
+        waitingForBankTransferButton = False
+        waitingForBankName = False
+
         try:
             WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[text()="Transfer Bank"]')))
+            waitingForBankTransferButton = True
         except Exception as e:
             print(colored('ERROR waiting for bank transfer button! ' + str(e), 'red'))
 
@@ -205,21 +226,29 @@ def scrap():
 
         try:
             WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//div[contains(@class, "checkout-bank-transfer-item__title") and text()="' + bankName + '"]')))
+            waitingForBankName = True
         except Exception as e:
             print(colored('ERROR waiting for bank mandiri button! ' + str(e), 'red'))
 
             return True
-
-        driver.find_element(By.XPATH, '//div[contains(@class, "checkout-bank-transfer-item__title") and text()="' + bankName + '"]').click()
+        
+        if waitingForBankTransferButton and waitingForBankName:
+            waitingForPaymentButton = True
+            driver.find_element(By.XPATH, '//div[contains(@class, "checkout-bank-transfer-item__title") and text()="' + bankName + '"]').click()
     elif inputPaymentMethod == 'cod':
+        waitingForCODButton = False
+
         try:
             WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[text()="COD (Bayar di Tempat)"]')))
+            waitingForCODButton = True
         except Exception as e:
             print(colored('ERROR waiting for cod button! ' + str(e), 'red'))
 
             return True
-
-        driver.find_element(By.XPATH, '//button[text()="COD (Bayar di Tempat)"]').click()
+        
+        if waitingForCODButton:
+            waitingForPaymentButton = True
+            driver.find_element(By.XPATH, '//button[text()="COD (Bayar di Tempat)"]').click()
     else:
         print(colored('ERROR unknown payment method!', 'red'))
 
@@ -227,14 +256,19 @@ def scrap():
     
     choosingPaymentMethod = datetime.now()
 
-    try:
-        WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.element_to_be_clickable((By.XPATH, '//button[text()="Buat Pesanan"]')))
-    except Exception as e:
-        print(colored('ERROR place order button not found or unclickable! ' + str(e), 'red'))
+    waitingForOrderButton = False
 
-        return True
+    if waitingForPaymentButton:
+        try:
+            WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.element_to_be_clickable((By.XPATH, '//button[text()="Buat Pesanan"]')))
+            waitingForOrderButton = True
+        except Exception as e:
+            print(colored('ERROR place order button not found or unclickable! ' + str(e), 'red'))
 
-    driver.find_element(By.XPATH, '//button[text()="Buat Pesanan"]').click()
+            return True
+        
+    if waitingForOrderButton:
+        driver.find_element(By.XPATH, '//button[text()="Buat Pesanan"]').click()
 
     endTime = datetime.now()
 
