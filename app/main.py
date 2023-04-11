@@ -43,40 +43,40 @@ def inputData():
     global inputPaymentMethod
     global bankName
 
-    inputUrl = input(colored('PASTE URL (Ctrl + Shift + C) : ', 'red', attrs=['reverse']))
-    inputFlashSale = input(colored('IS PRODUCT IN FLASH SALE? (y/n) : ', 'red', attrs=['reverse']))
-    inputIsProductHasVariations = input(colored('IS PRODUCT HAS VARIATIONS? (y/n) : ', 'red', attrs=['reverse']))
+    inputUrl = input(colored('PASTE URL (Ctrl + Shift + C) : ', 'red'))
+    inputFlashSale = input(colored('IS PRODUCT IN FLASH SALE? (y/n) : ', 'red'))
+    inputIsProductHasVariations = input(colored('IS PRODUCT HAS VARIATIONS? (y/n) : ', 'red'))
 
     productVariations = []
 
     if inputIsProductHasVariations == 'y':
         if inputTotalProductVariations.isnumeric():
-            inputTotalProductVariations = input(colored('TOTAL PRODUCT VARIATIONS : ', 'red', attrs=['reverse']))
+            inputTotalProductVariations = input(colored('TOTAL PRODUCT VARIATIONS : ', 'red'))
 
             for index in range(int(inputTotalProductVariations)):
-                item = input(colored('VARIATION ' + str(index + 1) + ' : ', 'green', attrs=['reverse']))
+                item = input(colored('VARIATION ' + str(index + 1) + ' : ', 'green'))
 
                 productVariations.append(item)
 
-    inputPaymentMethod = input(colored('PAYMENT METHOD (cod / transfer) : ', 'red', attrs=['reverse']))
+    inputPaymentMethod = input(colored('PAYMENT METHOD (cod / transfer) : ', 'red'))
 
     if inputPaymentMethod == 'transfer':
-        bankName = input(colored('BANK NAME : ', 'red', attrs=['reverse']))
+        bankName = input(colored('BANK NAME : ', 'red'))
 
-    print(colored('CONFIRMATION! : ', 'blue', attrs=['reverse']))
-    print(colored('YOUR PRODUCT URL IS : ' + inputUrl, 'blue', attrs=['reverse']))
-    print(colored('IS PRODUCT IN FLASH SALE : ' + inputFlashSale, 'blue', attrs=['reverse']))
-    print(colored('IS PRODUCT HAS VARIATIONS? : ' + inputIsProductHasVariations, 'blue', attrs=['reverse']))
+    print(colored('CONFIRMATION! : ', 'blue'))
+    print(colored('YOUR PRODUCT URL IS : ' + inputUrl, 'blue'))
+    print(colored('IS PRODUCT IN FLASH SALE : ' + inputFlashSale, 'blue'))
+    print(colored('IS PRODUCT HAS VARIATIONS? : ' + inputIsProductHasVariations, 'blue'))
 
     if inputIsProductHasVariations == 'y':
-        print(colored('PRODUCT VARIATIONS : ' + str(productVariations), 'blue', attrs=['reverse']))
+        print(colored('PRODUCT VARIATIONS : ' + str(productVariations), 'blue'))
 
-    print(colored('PAYMENT METHOD : ' + inputPaymentMethod, 'blue', attrs=['reverse']))
+    print(colored('PAYMENT METHOD : ' + inputPaymentMethod, 'blue'))
 
     if inputPaymentMethod == 'transfer':
-        print(colored('BANK NAME : ' + bankName, 'blue', attrs=['reverse']))
+        print(colored('BANK NAME : ' + bankName, 'blue'))
 
-    isContinue = input(colored('DO YOU WANT TO CONTINUE? (y/n) : ', 'red', attrs=['reverse']))
+    isContinue = input(colored('DO YOU WANT TO CONTINUE? (y/n) : ', 'red'))
 
     if isContinue == 'y':
         if inputFlashSale == 'n':
@@ -84,12 +84,12 @@ def inputData():
 
         scrap()
     else:
-        isTryAgain = input(colored('DO YOU WANT TO TRY AGAIN? (y/n) : ', 'red', attrs=['reverse']))
+        isTryAgain = input(colored('DO YOU WANT TO TRY AGAIN? (y/n) : ', 'red'))
 
         if isTryAgain == 'y':
             inputData()
         else:
-            print(colored('PROGRAM FINISH : ', 'white', attrs=['reverse']))
+            print(colored('PROGRAM FINISH : ', 'white'))
 
 def scrap():
     global inputUrl
@@ -98,7 +98,7 @@ def scrap():
     global inputPaymentMethod
     global bankName
 
-    print(colored('PROCESS : load page ', 'green', attrs=['reverse']))
+    print(colored('PROCESS : load page ', 'green'))
 
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -117,7 +117,7 @@ def scrap():
 
     time.sleep(3)
 
-    print(colored('PROCESS : load cookies ', 'green', attrs=['reverse']))
+    print(colored('PROCESS : load cookies ', 'green'))
 
     try:
         with open('./cookie/cookie.json', 'r') as file:
@@ -132,7 +132,7 @@ def scrap():
     except Exception as e:
         print('ERROR loading cookies! ' + str(e))
 
-    print(colored('PROCESS : refreshing ', 'green', attrs=['reverse']))
+    print(colored('PROCESS : refreshing ', 'green'))
 
     driver.refresh()
 
@@ -144,9 +144,9 @@ def scrap():
         # waiting for flash sale link to disappear
 
         try:
-            WebDriverWait(driver=driver, timeout=240, poll_frequency=0.2).until(ec.invisibility_of_element_located((By.XPATH, '//a[contains(@href, "/flash_sale")]')))
+            WebDriverWait(driver=driver, timeout=360, poll_frequency=0.2).until(ec.invisibility_of_element_located((By.XPATH, '//a[contains(@href, "/flash_sale")]')))
         except Exception as e:
-            print(colored('ERROR waiting flash sale button to disappear! ' + str(e), 'red', attrs=['reverse']))
+            print(colored('ERROR waiting flash sale button to disappear! ' + str(e), 'red'))
             
             return True
 
@@ -165,9 +165,12 @@ def scrap():
                 break
 
     if isVariationsComplete:
-        driver.find_element(By.XPATH, '//button[text()="beli sekarang"]').click()
+        try:
+            driver.find_element(By.XPATH, '//button[text()="beli sekarang"]').click()
+        except Exception as e:
+            print(colored('ERROR unable to find order button!', 'red'))
     else:
-        print(colored('ERROR incomplete product variations!', 'red', attrs=['reverse']))
+        print(colored('ERROR incomplete product variations!', 'red'))
 
         return True
 
@@ -178,7 +181,7 @@ def scrap():
     try:
         WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[contains(@class, "shopee-button-solid shopee-button-solid--primary")]/span[text()="checkout"]')))
     except Exception as e:
-        print(colored('ERROR waiting for checkout button! ' + str(e), 'red', attrs=['reverse']))
+        print(colored('ERROR waiting for checkout button! ' + str(e), 'red'))
 
         return True
 
@@ -192,7 +195,7 @@ def scrap():
         try:
             WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[text()="Transfer Bank"]')))
         except Exception as e:
-            print(colored('ERROR waiting for bank transfer button! ' + str(e), 'red', attrs=['reverse']))
+            print(colored('ERROR waiting for bank transfer button! ' + str(e), 'red'))
 
             return True
 
@@ -203,7 +206,7 @@ def scrap():
         try:
             WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//div[contains(@class, "checkout-bank-transfer-item__title") and text()="' + bankName + '"]')))
         except Exception as e:
-            print(colored('ERROR waiting for bank mandiri button! ' + str(e), 'red', attrs=['reverse']))
+            print(colored('ERROR waiting for bank mandiri button! ' + str(e), 'red'))
 
             return True
 
@@ -212,13 +215,13 @@ def scrap():
         try:
             WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[text()="COD (Bayar di Tempat)"]')))
         except Exception as e:
-            print(colored('ERROR waiting for cod button! ' + str(e), 'red', attrs=['reverse']))
+            print(colored('ERROR waiting for cod button! ' + str(e), 'red'))
 
             return True
 
         driver.find_element(By.XPATH, '//button[text()="COD (Bayar di Tempat)"]').click()
     else:
-        print(colored('ERROR unknown payment method!', 'red', attrs=['reverse']))
+        print(colored('ERROR unknown payment method!', 'red'))
 
         return True
     
@@ -227,7 +230,7 @@ def scrap():
     try:
         WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.element_to_be_clickable((By.XPATH, '//button[text()="Buat Pesanan"]')))
     except Exception as e:
-        print(colored('ERROR place order button not found or unclickable! ' + str(e), 'red', attrs=['reverse']))
+        print(colored('ERROR place order button not found or unclickable! ' + str(e), 'red'))
 
         return True
 
@@ -245,6 +248,6 @@ def scrap():
     print(colored('payment method -> ' + str(choosingPaymentMethod), 'yellow'))
     print(colored('end -> ' + str(endTime), 'yellow'))
 
-    print(colored('PROGRAM SUCCESS! : ', 'green', attrs=['reverse']))
+    print(colored('PROGRAM SUCCESS! : ', 'green'))
 
 inputData()
