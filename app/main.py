@@ -1,5 +1,6 @@
 import json
 import time
+import sys
 from datetime import datetime
 from termcolor import colored
 from selenium import webdriver
@@ -31,6 +32,79 @@ userAgents = [
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36", 
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36", 
 ]
+
+def selectRequest():
+    requestType = sys.argv[1]
+
+    if requestType == 'input':
+        inputData()
+    elif requestType == 'file':
+        filename = sys.argv[2]
+
+        global inputUrl
+        global inputIsProductHasVariations
+        global inputTotalProductVariations
+        global inputPaymentMethod
+        global productVariations
+        global isFlashSale
+        global bankName
+        isOkToContinue = True
+        productVariations = []
+
+        try:
+            with open('./request/' + filename, 'r') as file:
+                contents = file.readlines()
+
+                if len(contents) > 0:
+                    for line in contents:
+                        row = line.replace("\n", '')
+                        row = row.replace("\r", '')
+
+                        splitting = row.split('=')
+
+                        if len(splitting) == 2:
+                            if splitting[0] == 'URL':
+                                inputUrl = splitting[1]
+                            elif splitting[0] == 'TOTAL_VARIATIONS':
+                                if splitting[1] != '' and int(splitting[1]) > 0:
+                                    inputIsProductHasVariations = 'y'
+                                    inputTotalProductVariations = splitting[1]
+                                else:
+                                    inputIsProductHasVariations = 'n'
+                            elif splitting[0] == 'VARIATIONS':
+                                if inputIsProductHasVariations == 'y' and splitting[1] != '':
+                                    splittingVariations = splitting[1].split(',')
+
+                                    if len(splittingVariations) > 0:
+                                        for item in splittingVariations:
+                                            if item != '':
+                                                productVariations.append(item)
+                                    else:
+                                        print(colored('input variation is Y, but variation is not valid', 'red'))
+                                else:
+                                    isOkToContinue = False
+                                    print(colored('input variation is Y, but variation is empty', 'red'))
+                            elif splitting[0] == 'PAYMENT_METHOD':
+                                inputPaymentMethod = splitting[1]
+                            elif splitting[0] == 'BANK_NAME':
+                                if inputPaymentMethod == 'transfer':
+                                    bankName = splitting[1]
+                            elif splitting[0] == 'FLASH_SALE':
+                                if splitting[1] == 'y':
+                                    isFlashSale = True
+                                else:
+                                    isFlashSale = False
+                else:
+                    isOkToContinue = False
+                    print(colored('request file empty', 'red'))
+        except Exception as e:
+            isOkToContinue = False
+            print(colored('ERROR loading request file! ' + str(e), 'red'))
+
+        if isOkToContinue:
+            scrap()
+    else:
+        print(colored('ERROR unknown request type!', 'red'))
 
 def inputData():
     just_fix_windows_console()
@@ -165,11 +239,10 @@ def scrap():
             currentVariation = driver.find_elements(By.XPATH, '//button[contains(@class, "product-variation")][@aria-label="' + item + '"][text()="' + item + '"]')
 
             if len(currentVariation) > 0 and currentVariation[0].is_enabled():
-                variationStatuses.push(True)
+                variationStatuses.append(True)
                 currentVariation[0].click()
             else:
-                isVariationsComplete = False
-                variationStatuses.push(False)
+                variationStatuses.append(False)
                 break
 
     if False not in variationStatuses:
@@ -284,4 +357,4 @@ def scrap():
 
     print(colored('PROGRAM SUCCESS! : ', 'green'))
 
-inputData()
+selectRequest()
