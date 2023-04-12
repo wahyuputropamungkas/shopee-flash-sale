@@ -223,7 +223,7 @@ def scrap():
         # waiting for flash sale link to disappear
 
         try:
-            WebDriverWait(driver=driver, timeout=360, poll_frequency=0.2).until(ec.invisibility_of_element_located((By.XPATH, '//a[contains(@href, "/flash_sale?")]')))
+            WebDriverWait(driver=driver, timeout=360, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//div[text()="99% off"]')))
             waitingForFlashSale = True
         except Exception as e:
             print(colored('ERROR waiting flash sale button to disappear! ' + str(e), 'red'))
@@ -275,7 +275,20 @@ def scrap():
 
         return True
     
+    isTotalPriceOK = False
+    
     if waitingForCheckoutButton:
+        try:
+            getPrice = driver.find_element(By.XPATH, '//div[text()="Total (1 produk):"]/following-sibling::div[text()="Rp1"]')
+
+            if len(getPrice):
+                isTotalPriceOK = True
+        except Exception as e:
+            print(colored('ERROR checking total price! ' + str(e), 'red'))
+
+            return True
+    
+    if isTotalPriceOK:
         driver.find_element(By.XPATH, '//button[contains(@class, "shopee-button-solid shopee-button-solid--primary")]/span[text()="checkout"]').click()
 
     clickedCheckout = datetime.now()
