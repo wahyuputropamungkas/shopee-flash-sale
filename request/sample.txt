@@ -1,0 +1,6 @@
+URL|https://shopee.co.id/Sepatu-Sneakers-Pria-Hitam-Full-Black-Kasual-Kerja-Santai-Running-Lari-Original-Premium-Aruna-LAF-Project-i.86518397.14857233168
+TOTAL_VARIATIONS|1
+VARIATIONS|40
+FLASH_SALE|y
+PAYMENT_METHOD|transfer
+BANK_NAME|Bank Mandiri

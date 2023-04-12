@@ -3,3 +3,4 @@
 !/cookie/.gitkeep
 /request/*
 !/request/.gitkeep
+!/request/sample.txt
