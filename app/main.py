@@ -237,7 +237,7 @@ def scrap():
     isVariationsComplete = False
     variationStatuses = []
 
-    if len(productVariations) > 0:
+    if waitingForFlashSale and len(productVariations) > 0:
         for item in productVariations:
             currentVariation = driver.find_elements(By.XPATH, '//button[contains(@class, "product-variation")][@aria-label="' + item + '"][text()="' + item + '"]')
 
