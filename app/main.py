@@ -10,7 +10,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from colorama import just_fix_windows_console
-import undetected_chromedriver as uc 
+from fake_useragent import UserAgent
 
 timeout = 60
 global inputUrl
@@ -28,10 +28,9 @@ productVariations = []
 isFlashSale = True
 bankName = ''
 
-userAgents = [ 
-	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36", 
-	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36", 
-]
+ua = UserAgent(browsers=['chrome'])
+userAgent = ua.random
+userAgents = [userAgent]
 
 def selectRequest():
     global inputUrl
@@ -188,11 +187,11 @@ def scrap():
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
     for agent in userAgents:
-        driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": agent}) 
+        driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": agent})
 
     driver.get(inputUrl)
 
-    time.sleep(3)
+    time.sleep(5)
 
     print(colored('PROCESS : load cookies ', 'green'))
 
@@ -238,24 +237,51 @@ def scrap():
     variationStatuses = []
 
     if waitingForFlashSale and len(productVariations) > 0:
-        for item in productVariations:
-            currentVariation = driver.find_elements(By.XPATH, '//button[contains(@class, "product-variation")][@aria-label="' + item + '"][text()="' + item + '"]')
+        isVariationsReady = False
 
-            if len(currentVariation) > 0 and currentVariation[0].is_enabled():
-                variationStatuses.append(True)
-                currentVariation[0].click()
-            else:
-                variationStatuses.append(False)
-                break
+        try:
+            WebDriverWait(driver=driver, timeout=360, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[contains(@class, "product-variation")][@aria-label="' + productVariations[0] + '"][text()="' + productVariations[0] + '"]')))
+            isVariationsReady = True
+        except Exception as e:
+            print(colored('ERROR waiting product variations! ' + str(e), 'red'))
+            
+            return True
+        
+        if isVariationsReady:
+            for item in productVariations:
+                currentVariation = driver.find_elements(By.XPATH, '//button[contains(@class, "product-variation")][@aria-label="' + item + '"][text()="' + item + '"]')
+
+                if len(currentVariation) > 0 and currentVariation[0].is_enabled():
+                    variationStatuses.append(True)
+                    currentVariation[0].click()
+                else:
+                    variationStatuses.append(False)
+                    break
 
     if False not in variationStatuses:
         isVariationsComplete = True
 
     if waitingForFlashSale and isVariationsComplete:
+        isOrderButtonOk = False
+
         try:
-            driver.find_element(By.XPATH, '//button[text()="beli sekarang"]').click()
+            WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//button[text()="beli sekarang"]')))
+            isOrderButtonOk = True
         except Exception as e:
-            print(colored('ERROR unable to find order button!', 'red'))
+            print(colored('ERROR waiting for order button! ' + str(e), 'red'))
+
+            return True
+        
+        if isOrderButtonOk:
+            try:
+                orderButton = driver.find_elements(By.XPATH, '//button[text()="beli sekarang"]')
+
+                if len(orderButton) > 0 and orderButton[0].is_enabled():
+                    orderButton[0].click()
+            except Exception as e:
+                print(colored('ERROR unable to find order button!', 'red'))
+
+                return True
     else:
         print(colored('ERROR incomplete product variations!', 'red'))
 
@@ -278,15 +304,26 @@ def scrap():
     isTotalPriceOK = False
     
     if waitingForCheckoutButton:
-        try:
-            getPrice = driver.find_element(By.XPATH, '//div[text()="Total (1 produk):"]/following-sibling::div[text()="Rp1"]')
+        isPriceValid = False
 
-            if len(getPrice):
-                isTotalPriceOK = True
+        try:
+            WebDriverWait(driver=driver, timeout=timeout, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//div[text()="Total (1 produk):"]/following-sibling::div[text()="Rp1"]')))
+            isPriceValid = True
         except Exception as e:
-            print(colored('ERROR checking total price! ' + str(e), 'red'))
+            print(colored('ERROR waiting for valid price! ' + str(e), 'red'))
 
             return True
+        
+        if isPriceValid:
+            try:
+                getPrice = driver.find_element(By.XPATH, '//div[text()="Total (1 produk):"]/following-sibling::div[text()="Rp1"]')
+
+                if len(getPrice):
+                    isTotalPriceOK = True
+            except Exception as e:
+                print(colored('ERROR checking total price! ' + str(e), 'red'))
+
+                return True
     
     if isTotalPriceOK:
         driver.find_element(By.XPATH, '//button[contains(@class, "shopee-button-solid shopee-button-solid--primary")]/span[text()="checkout"]').click()
