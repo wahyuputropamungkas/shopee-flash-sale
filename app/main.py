@@ -34,20 +34,20 @@ userAgents = [
 ]
 
 def selectRequest():
+    global inputUrl
+    global inputIsProductHasVariations
+    global inputTotalProductVariations
+    global inputPaymentMethod
+    global productVariations
+    global isFlashSale
+    global bankName
+    
     requestType = sys.argv[1]
 
     if requestType == 'input':
         inputData()
     elif requestType == 'file':
         filename = sys.argv[2]
-
-        global inputUrl
-        global inputIsProductHasVariations
-        global inputTotalProductVariations
-        global inputPaymentMethod
-        global productVariations
-        global isFlashSale
-        global bankName
         isOkToContinue = True
         productVariations = []
 
@@ -60,7 +60,7 @@ def selectRequest():
                         row = line.replace("\n", '')
                         row = row.replace("\r", '')
 
-                        splitting = row.split('=')
+                        splitting = row.split('|')
 
                         if len(splitting) == 2:
                             if splitting[0] == 'URL':
@@ -94,6 +94,9 @@ def selectRequest():
                                     isFlashSale = True
                                 else:
                                     isFlashSale = False
+                        else:
+                            isOkToContinue = False
+                            print(colored('splitting invalid : ' + str(splitting), 'red'))
                 else:
                     isOkToContinue = False
                     print(colored('request file empty', 'red'))
