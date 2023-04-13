@@ -79,10 +79,12 @@ def selectRequest():
                                             if item != '':
                                                 productVariations.append(item)
                                     else:
-                                        print(colored('input variation is Y, but variation is not valid', 'red'))
+                                        print(colored('input variation is Y, but variation is not valid ' + inputIsProductHasVariations + ' ', 'red'))
+                                elif inputIsProductHasVariations == 'n':
+                                    isOkToContinue = True
                                 else:
                                     isOkToContinue = False
-                                    print(colored('input variation is Y, but variation is empty', 'red'))
+                                    print(colored('input variation is Y, but variation is empty ' + inputIsProductHasVariations, 'red'))
                             elif splitting[0] == 'PAYMENT_METHOD':
                                 inputPaymentMethod = splitting[1]
                             elif splitting[0] == 'BANK_NAME':
@@ -222,7 +224,7 @@ def scrap():
         # waiting for flash sale link to disappear
 
         try:
-            WebDriverWait(driver=driver, timeout=360, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//div[text()="99% off"]')))
+            WebDriverWait(driver=driver, timeout=3600, poll_frequency=0.2).until(ec.presence_of_element_located((By.XPATH, '//div[text()="99% off"]')))
             waitingForFlashSale = True
         except Exception as e:
             print(colored('ERROR waiting flash sale button to disappear! ' + str(e), 'red'))
